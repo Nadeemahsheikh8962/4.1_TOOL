@@ -5,114 +5,133 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}"
-echo "╔══════════════════════════════════════╗"
-echo "║        NADEEM TOOL INSTALLER        ║"
-echo "╚══════════════════════════════════════╝"
+# Banner
+echo -e "${CYAN}"
+echo "╔══════════════════════════════════════════╗"
+echo "║           NADEEM TOOL INSTALLER         ║"
+echo "║           Auto-Installation Script      ║"
+echo "╚══════════════════════════════════════════╝"
 echo -e "${NC}"
 
 # Check if running in Termux
 if [ ! -d "/data/data/com.termux/files/usr" ]; then
-    echo -e "${RED}Error: This script must be run in Termux${NC}"
+    echo -e "${RED}❌ Error: This script must be run in Termux${NC}"
     exit 1
 fi
 
+# Function to check command success
+check_success() {
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✅ Success${NC}"
+    else
+        echo -e "${RED}❌ Failed${NC}"
+    fi
+}
+
 # Update packages
-echo -e "${YELLOW}[*] Updating packages...${NC}"
+echo -e "${YELLOW}[1] Updating packages...${NC}"
 pkg update -y
+check_success
 
 # Install dependencies
-echo -e "${YELLOW}[*] Installing dependencies...${NC}"
-pkg install -y python git wget unzip
+echo -e "${YELLOW}[2] Installing dependencies...${NC}"
+pkg install -y python git wget unzip -o Dpkg::Options::="--force-confnew"
+check_success
 
-# Create NADEEM directory
-echo -e "${YELLOW}[*] Creating NADEEM directory...${NC}"
-mkdir -p ~/storage/shared/NADEEM
-cd ~/storage/shared/NADEEM
+# Create NADEEM directory in Termux home
+echo -e "${YELLOW}[3] Creating NADEEM directory...${NC}"
+mkdir -p ~/NADEEM
+cd ~/NADEEM
+check_success
 
-# Download and extract the tool
-echo -e "${YELLOW}[*] Downloading NADEEM tool...${NC}"
+# Clean previous installations
+echo -e "${YELLOW}[4] Cleaning previous installations...${NC}"
+rm -f nadeem.zip
+rm -rf 4.1_TOOL-main
+check_success
+
+# Download the tool
+echo -e "${YELLOW}[5] Downloading NADEEM tool...${NC}"
 wget -O nadeem.zip https://github.com/Nadeemahsheikh8962/4.1_TOOL/archive/refs/heads/main.zip
 
 if [ ! -f "nadeem.zip" ]; then
-    echo -e "${RED}Error: Failed to download the tool${NC}"
+    echo -e "${RED}❌ Error: Failed to download the tool${NC}"
     exit 1
 fi
+check_success
 
-echo -e "${YELLOW}[*] Extracting files...${NC}"
+# Extract files
+echo -e "${YELLOW}[6] Extracting files...${NC}"
 unzip -o nadeem.zip
-rm nadeem.zip
-
-# Move files to proper location
+rm -f nadeem.zip
 mv 4.1_TOOL-main/* .
 rm -rf 4.1_TOOL-main
+check_success
 
-# Install Python requirements
-echo -e "${YELLOW}[*] Installing Python modules...${NC}"
+# Install Python modules (for any Python dependencies)
+echo -e "${YELLOW}[7] Installing Python modules...${NC}"
+pip install requests rich colorama tqdm pycryptodome zstandard gmalg 2>/dev/null || echo -e "${YELLOW}[!] Some modules skipped (optional)${NC}"
 
-# Install required packages individually to handle potential issues
-pip install requests rich colorama tqdm pycryptodome
-
-# Try to install zstandard if available
-pip install zstandard 2>/dev/null || echo -e "${YELLOW}[!] zstandard not available, skipping...${NC}"
-
-# Try to install gmalg if available  
-pip install gmalg 2>/dev/null || echo -e "${YELLOW}[!] gmalg not available, using fallback...${NC}"
-
-# Detect the main file and make it executable
-echo -e "${YELLOW}[*] Setting up main executable...${NC}"
-MAIN_FILE=""
-if [ -f "nadeem.py" ]; then
-    MAIN_FILE="nadeem.py"
-    chmod +x nadeem.py
-elif [ -f "nadeem" ]; then
-    MAIN_FILE="nadeem"
+# Set up the binary executable
+echo -e "${YELLOW}[8] Setting up executable...${NC}"
+if [ -f "nadeem" ]; then
+    # It's a compiled binary - make it executable
     chmod +x nadeem
+    MAIN_FILE="nadeem"
+    echo -e "${GREEN}✅ Binary executable detected${NC}"
 else
-    echo -e "${RED}Error: Could not find main executable file${NC}"
-    echo -e "${YELLOW}[*] Available files:${NC}"
-    ls -la
+    echo -e "${RED}❌ Error: Main executable not found${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}[+] Main file detected: $MAIN_FILE${NC}"
-
 # Create alias for easy access
-echo -e "${YELLOW}[*] Setting up command alias...${NC}"
-if ! grep -q "alias nadeem" ~/.bashrc; then
-    echo "alias nadeem='cd ~/storage/shared/NADEEM && python $MAIN_FILE'" >> ~/.bashrc
-fi
+echo -e "${YELLOW}[9] Creating command alias...${NC}"
+# Remove existing aliases
+sed -i '/alias nadeem/d' ~/.bashrc 2>/dev/null
+sed -i '/alias nadeem/d' ~/.zshrc 2>/dev/null
+
+# Create new alias - run the binary directly
+echo "alias nadeem='~/NADEEM/nadeem'" >> ~/.bashrc
 
 if [ -f ~/.zshrc ]; then
-    if ! grep -q "alias nadeem" ~/.zshrc; then
-        echo "alias nadeem='cd ~/storage/shared/NADEEM && python $MAIN_FILE'" >> ~/.zshrc
-    fi
+    echo "alias nadeem='~/NADEEM/nadeem'" >> ~/.zshrc
 fi
 
-# Create a launcher script
-cat > ~/../usr/bin/nadeem << EOF
+# Create launcher script in Termux bin directory
+echo -e "${YELLOW}[10] Creating launcher...${NC}"
+cat > $PREFIX/bin/nadeem << EOF
 #!/bin/bash
-cd ~/storage/shared/NADEEM
-python $MAIN_FILE "\$@"
+cd ~/NADEEM
+exec ./nadeem "\$@"
 EOF
 
-chmod +x ~/../usr/bin/nadeem
+chmod +x $PREFIX/bin/nadeem
+check_success
 
-# Reload bashrc
-source ~/.bashrc
+# Final setup
+echo -e "${YELLOW}[11] Finalizing installation...${NC}"
+source ~/.bashrc 2>/dev/null
 
+# Display completion message
 echo -e "${GREEN}"
-echo "╔══════════════════════════════════════╗"
-echo "║         INSTALLATION COMPLETE        ║"
-echo "╚══════════════════════════════════════╝"
+echo "╔══════════════════════════════════════════╗"
+echo "║           INSTALLATION COMPLETE!        ║"
+echo "╚══════════════════════════════════════════╝"
 echo -e "${NC}"
-echo -e "${GREEN}[+] Tool installed successfully!${NC}"
-echo -e "${GREEN}[+] Main file: $MAIN_FILE${NC}"
-echo -e "${GREEN}[+] You can now run the tool by typing:${NC}"
-echo -e "${BLUE}    nadeem${NC}"
-echo -e "${GREEN}[+] Or navigate to:${NC}"
-echo -e "${BLUE}    cd ~/storage/shared/NADEEM && python $MAIN_FILE${NC}"
-echo -e "${YELLOW}[*] If 'nadeem' command doesn't work, restart Termux or run:${NC}"
-echo -e "${BLUE}    source ~/.bashrc${NC}"
+echo -e "${GREEN}🎉 NADEEM Tool successfully installed!${NC}"
+echo ""
+echo -e "${CYAN}🚀 Quick Start:${NC}"
+echo -e "${GREEN}   Type: ${CYAN}nadeem${GREEN} to start the tool${NC}"
+echo ""
+echo -e "${YELLOW}📁 Location:${NC}"
+echo -e "   ${CYAN}~/NADEEM/${NC}"
+echo ""
+echo -e "${YELLOW}🔧 If 'nadeem' command doesn't work:${NC}"
+echo -e "   ${CYAN}1. Restart Termux${NC}"
+echo -e "   ${CYAN}2. Or run: ${GREEN}source ~/.bashrc${NC}"
+echo -e "   ${CYAN}3. Or run manually: ${GREEN}cd ~/NADEEM && ./nadeem${NC}"
+echo ""
+echo -e "${GREEN}💡 The tool is now available anywhere in Termux!${NC}"
