@@ -51,7 +51,6 @@ rm -rf 4.1_TOOL-main
 
 # Install Python requirements
 echo -e "${YELLOW}[*] Installing Python modules...${NC}"
-pip install --upgrade pip
 
 # Install required packages individually to handle potential issues
 pip install requests rich colorama tqdm pycryptodome
@@ -62,18 +61,33 @@ pip install zstandard 2>/dev/null || echo -e "${YELLOW}[!] zstandard not availab
 # Try to install gmalg if available  
 pip install gmalg 2>/dev/null || echo -e "${YELLOW}[!] gmalg not available, using fallback...${NC}"
 
-# Make main script executable
-chmod +x nadeem.py
+# Detect the main file and make it executable
+echo -e "${YELLOW}[*] Setting up main executable...${NC}"
+MAIN_FILE=""
+if [ -f "nadeem.py" ]; then
+    MAIN_FILE="nadeem.py"
+    chmod +x nadeem.py
+elif [ -f "nadeem" ]; then
+    MAIN_FILE="nadeem"
+    chmod +x nadeem
+else
+    echo -e "${RED}Error: Could not find main executable file${NC}"
+    echo -e "${YELLOW}[*] Available files:${NC}"
+    ls -la
+    exit 1
+fi
+
+echo -e "${GREEN}[+] Main file detected: $MAIN_FILE${NC}"
 
 # Create alias for easy access
 echo -e "${YELLOW}[*] Setting up command alias...${NC}"
 if ! grep -q "alias nadeem" ~/.bashrc; then
-    echo 'alias nadeem="cd ~/storage/shared/NADEEM && python nadeem.py"' >> ~/.bashrc
+    echo "alias nadeem='cd ~/storage/shared/NADEEM && python $MAIN_FILE'" >> ~/.bashrc
 fi
 
 if [ -f ~/.zshrc ]; then
     if ! grep -q "alias nadeem" ~/.zshrc; then
-        echo 'alias nadeem="cd ~/storage/shared/NADEEM && python nadeem.py"' >> ~/.zshrc
+        echo "alias nadeem='cd ~/storage/shared/NADEEM && python $MAIN_FILE'" >> ~/.zshrc
     fi
 fi
 
@@ -81,7 +95,7 @@ fi
 cat > ~/../usr/bin/nadeem << EOF
 #!/bin/bash
 cd ~/storage/shared/NADEEM
-python nadeem.py "\$@"
+python $MAIN_FILE "\$@"
 EOF
 
 chmod +x ~/../usr/bin/nadeem
@@ -95,9 +109,10 @@ echo "║         INSTALLATION COMPLETE        ║"
 echo "╚══════════════════════════════════════╝"
 echo -e "${NC}"
 echo -e "${GREEN}[+] Tool installed successfully!${NC}"
+echo -e "${GREEN}[+] Main file: $MAIN_FILE${NC}"
 echo -e "${GREEN}[+] You can now run the tool by typing:${NC}"
 echo -e "${BLUE}    nadeem${NC}"
 echo -e "${GREEN}[+] Or navigate to:${NC}"
-echo -e "${BLUE}    cd ~/storage/shared/NADEEM && python nadeem.py${NC}"
+echo -e "${BLUE}    cd ~/storage/shared/NADEEM && python $MAIN_FILE${NC}"
 echo -e "${YELLOW}[*] If 'nadeem' command doesn't work, restart Termux or run:${NC}"
 echo -e "${BLUE}    source ~/.bashrc${NC}"
