@@ -77,10 +77,10 @@ pip install requests rich colorama tqdm pycryptodome zstandard gmalg 2>/dev/null
 
 # Set up the binary executable
 echo -e "${YELLOW}[8] Setting up executable...${NC}"
-if [ -f "nadeem" ]; then
+if [ -f "TOOL_NADEEM" ]; then
     # It's a compiled binary - make it executable
-    chmod +x nadeem
-    MAIN_FILE="nadeem"
+    chmod +x TOOL_NADEEM
+    MAIN_FILE="TOOL_NADEEM"
     echo -e "${GREEN}✅ Binary executable detected${NC}"
 else
     echo -e "${RED}❌ Error: Main executable not found${NC}"
@@ -90,25 +90,25 @@ fi
 # Create alias for easy access
 echo -e "${YELLOW}[9] Creating command alias...${NC}"
 # Remove existing aliases
-sed -i '/alias nadeem/d' ~/.bashrc 2>/dev/null
-sed -i '/alias nadeem/d' ~/.zshrc 2>/dev/null
+sed -i '/alias TOOL_NADEEM/d' ~/.bashrc 2>/dev/null
+sed -i '/alias TOOL_NADEEM/d' ~/.zshrc 2>/dev/null
 
 # Create new alias - run the binary directly
-echo "alias nadeem='~/NADEEM/nadeem'" >> ~/.bashrc
+echo "alias TOOL_NADEEM='~/NADEEM/TOOL_NADEEM'" >> ~/.bashrc
 
 if [ -f ~/.zshrc ]; then
-    echo "alias nadeem='~/NADEEM/nadeem'" >> ~/.zshrc
+    echo "alias TOOL_NADEEM='~/NADEEM/TOOL_NADEEM'" >> ~/.zshrc
 fi
 
 # Create launcher script in Termux bin directory
 echo -e "${YELLOW}[10] Creating launcher...${NC}"
-cat > $PREFIX/bin/nadeem << EOF
+cat > $PREFIX/bin/TOOL_NADEEM << EOF
 #!/bin/bash
 cd ~/NADEEM
-exec ./nadeem "\$@"
+exec ./TOOL_NADEEM "\$@"
 EOF
 
-chmod +x $PREFIX/bin/nadeem
+chmod +x $PREFIX/bin/TOOL_NADEEM
 check_success
 
 # Final setup
@@ -124,14 +124,14 @@ echo -e "${NC}"
 echo -e "${GREEN}🎉 NADEEM Tool successfully installed!${NC}"
 echo ""
 echo -e "${CYAN}🚀 Quick Start:${NC}"
-echo -e "${GREEN}   Type: ${CYAN}nadeem${GREEN} to start the tool${NC}"
+echo -e "${GREEN}   Type: ${CYAN}TOOL_NADEEM${GREEN} to start the tool${NC}"
 echo ""
 echo -e "${YELLOW}📁 Location:${NC}"
 echo -e "   ${CYAN}~/NADEEM/${NC}"
 echo ""
-echo -e "${YELLOW}🔧 If 'nadeem' command doesn't work:${NC}"
+echo -e "${YELLOW}🔧 If 'TOOL_NADEEM' command doesn't work:${NC}"
 echo -e "   ${CYAN}1. Restart Termux${NC}"
 echo -e "   ${CYAN}2. Or run: ${GREEN}source ~/.bashrc${NC}"
-echo -e "   ${CYAN}3. Or run manually: ${GREEN}cd ~/NADEEM && ./nadeem${NC}"
+echo -e "   ${CYAN}3. Or run manually: ${GREEN}cd ~/NADEEM && ./TOOL_NADEEM${NC}"
 echo ""
 echo -e "${GREEN}💡 The tool is now available anywhere in Termux!${NC}"
